@@ -7,7 +7,7 @@ from email.MIMEText import MIMEText
 from email.mime.base import MIMEBase
 
 class MyMailer:
-    """A mailer for dareed testing """
+    """A mailer for sending emails """
     def __init__(self, cfg_file_name, mail_file_name):
         self.cfg_file_name = cfg_file_name
         stream = open(self.cfg_file_name, "r")
@@ -23,11 +23,7 @@ class MyMailer:
         body = ""
         for entry in self.info["emails"]:
             body = string.replace(self.mail_string, '__name__', entry["name"])
-            body = string.replace(body, '__loginlink__', entry["loginlink"])
-            body = string.replace(body, '__username__', entry["username"])
-            body = string.replace(body, '__password__', entry["password"])
-            body = string.replace(body, '__fbemail__', entry["fbemail"])
-            body = string.replace(body, '__fbpassword__', entry["fbpassword"])
+            body = string.replace(body, '__surname__', entry["surname"])
             email = {}
             email["body"] = body
             email["to"] = entry["recipient"]
@@ -59,6 +55,8 @@ class MyMailer:
                 print "Unable to send email to " + email['to'] + " :-("
                 print "the exception: ", str(e)
 
-mailer = MyMailer("emails_to_send.yml", "mail.html")
+mailer = MyMailer("emails_to_send_prod.yml", "mail.html")
 # mailer.print_emails()
 mailer.send_emails()
+print "_________________________________________"
+print "Thanks for having used this script, if you want to contribute you can fork it here https://github.com/matttmezza/email-sender"
