@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, getopt, string, yaml, smtplib, codecs, time
+import sys, getopt, string, yaml, smtplib, codecs, time, datetime
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from email.mime.base import MIMEBase
@@ -22,22 +22,36 @@ class MyEmail:
 
 class MyMailer:
     """A mailer for sending emails """
-    def __init__(self, cfg_file_name, emails_file_name):
+    def __init__(self, cfg_file_name, emails_file_name, log_file = ""):
+        self.log_enabled = False
+        if log_file is not "":
+            self.log_enabled = True
+            self.log_file = open(log_file, "w")
+        self.log("Starting email-sender")
+        self.success = 0
+        self.failure = 0
+        self.skipped = 0
         try:
             self.cfg_file_name = cfg_file_name
             stream = open(self.cfg_file_name, "r")
             self.config = yaml.load(stream)
+            self.log("SMTP config loaded")
             self.emails_file_name = emails_file_name
             stream = open(self.emails_file_name, "r")
             self.emails = yaml.load(stream)
+            self.log("Emails loaded")
             self.smtp_cfg = self.config["smtp_cfg"]
         except Exception, e:
             print "Error loading file: ", e
+            self.log("Error loading file: " + str(e))
         self.build_emails()
 
     def build_emails(self):
         self.emails_to_send = []
+        i = 1
+        tot = len(self.emails["emails"])
         for entry in self.emails["emails"]:
+            self.log("Processing email "+str(i)+" of "+str(tot)+"...")
             vars_ = self.emails["vars"].copy()
             body = entry["email"]["body"]
             if body.startswith("file://"):
@@ -54,7 +68,9 @@ class MyMailer:
                     entry["email"][name] = string.replace(value, "__"+var_name+"__", var_val)
             email = MyEmail(entry["email"]["sender"], entry["email"]["recipient"], entry["email"]["subject"], body)
             email.reply_to = entry["email"]["reply_to"]
+            self.log("Finished processing email "+str(i)+" of "+str(tot))
             self.emails_to_send.append(email)
+            i = i+1
 
     def print_emails(self):
         i = 1
@@ -66,6 +82,8 @@ class MyMailer:
     def send_emails(self):
         for email in self.emails_to_send:
             self.send_email(email)
+            #self.send_email_stub(email)
+        self.report()
 
     def send_interactive(self):
         i = 1
@@ -80,16 +98,22 @@ class MyMailer:
                 time.sleep(1)
             else:
                 print "Email to "+email.to+" skipped...\n\n"
+                self.skipped = self.skipped + 1
                 time.sleep(1)
             i = i + 1
+        self.report()
 
     def send_email_stub(self, email):
         print "Sending..."
+        self.log("Sending email...")
         time.sleep(2)
         print "Email to "+email.to+" sent!\n\n"
+        self.log("Email to "+email.to+" sent!")
+        self.success = self.success + 1
 
     def send_email(self, email):
         try:
+            self.log("Sending email...")
             msg = MIMEText(email.body, "plain", 'utf-8')
             msg['subject'] = email.subject
             msg['from'] = email.from_
@@ -103,9 +127,36 @@ class MyMailer:
             s.sendmail(email.from_, email.to, msg.as_string())
             s.quit()
             print "Email to "+email.to+" sent!\n\n"
+            self.log("Email to "+email.to+" sent")
+            self.success = self.success + 1
         except Exception, e:
             print "Unable to send email to " + email.to + " :-("
+            self.log("Unable to send email to " + email.to)
+            self.failure = self.failure + 1
             print str(e)
+
+    def report(self):
+        print ""
+        print ""
+        print "Total emails: ", str(self.success+self.failure+self.skipped)
+        print "     success: ", str(self.success)
+        print "     failure: ", str(self.failure)
+        print "     skipped: ", str(self.skipped)
+        self.log("")
+        self.log("")
+        self.log("Total emails: " + str(self.success+self.failure+self.skipped))
+        self.log("     success: " + str(self.success))
+        self.log("     failure: " + str(self.failure))
+        self.log("     skipped: " + str(self.skipped))
+        self.log("--------\n\n")
+        self.log("Thanks for having used this script, if you want to contribute you can fork it here https://github.com/mattmezza/email-sender")
+
+    def log(self, msg):
+        if self.log_enabled:
+            self.log_file.write("["+self.now()+"]\t"+msg+"\n")
+
+    def now(self):
+        return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
 def query_yes_no(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
@@ -142,10 +193,11 @@ def query_yes_no(question, default="yes"):
 def main(argv):
     config_file = "config.yml"
     emails_file = ""
+    log_file = ""
     print_ = False
     interactive = False
     try:
-        opts, args = getopt.getopt(argv,"c:e:iph",["config=","emails=","interactive","print", "help"])
+        opts, args = getopt.getopt(argv,"c:e:l:iph",["config=","emails=","log=","interactive","print", "help"])
     except getopt.GetoptError:
         print 'email-sender.py -c <config_file> -e <emails_file> [-i] [-p]'
         sys.exit(2)
@@ -157,12 +209,14 @@ def main(argv):
             config_file = arg
         elif opt in ("-e", "--emails"):
             emails_file = arg
+        elif opt in ("-l", "--log"):
+            log_file = arg
         elif opt in ("-p", "--print"):
             print_ = True
         elif opt in ("-i", "--interactive"):
             interactive = True
 
-    mailer = MyMailer(config_file, emails_file)
+    mailer = MyMailer(config_file, emails_file, log_file)
     if print_:
         mailer.print_emails()
         sys.exit()
