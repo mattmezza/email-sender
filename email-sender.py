@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, getopt, string, yaml, smtplib, codecs
+import sys, getopt, string, yaml, smtplib, codecs, time
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from email.mime.base import MIMEBase
@@ -68,14 +68,25 @@ class MyMailer:
             self.send_email(email)
 
     def send_interactive(self):
+        i = 1
+        tot = len(self.emails_to_send)
         for email in self.emails_to_send:
-            print "Next email is:"
+            print "Email "+str(i)+" of "+str(tot)+":"
             print email.short_str()
-            if query_yes_no("Do you really want to send the following email?"):
-                #self.send_email(email)
-                print "sending..."
+            print ""
+            if query_yes_no("Do you really want to send this email?"):
+                self.send_email(email)
+                #self.send_email_stub(email)
+                time.sleep(1)
             else:
-                print "Email to "+email.to+" skipped..."
+                print "Email to "+email.to+" skipped...\n\n"
+                time.sleep(1)
+            i = i + 1
+
+    def send_email_stub(self, email):
+        print "Sending..."
+        time.sleep(2)
+        print "Email to "+email.to+" sent!\n\n"
 
     def send_email(self, email):
         try:
@@ -91,10 +102,10 @@ class MyMailer:
             s.login(self.smtp_cfg['username'], self.smtp_cfg['password'])
             s.sendmail(email.from_, email.to, msg.as_string())
             s.quit()
-            print "Email to " + email.to + " sent!"
+            print "Email to "+email.to+" sent!\n\n"
         except Exception, e:
             print "Unable to send email to " + email.to + " :-("
-            print "the exception: ", str(e)
+            print str(e)
 
 def query_yes_no(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
@@ -134,7 +145,7 @@ def main(argv):
     print_ = False
     interactive = False
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"c:e:iph",["config=","emails=","interactive","print", "help"])
+        opts, args = getopt.getopt(argv,"c:e:iph",["config=","emails=","interactive","print", "help"])
     except getopt.GetoptError:
         print 'email-sender.py -c <config_file> -e <emails_file> [-i] [-p]'
         sys.exit(2)
@@ -159,7 +170,7 @@ def main(argv):
         mailer.send_interactive()
     else:
         mailer.send_emails()
-    print "\n_________________________________________"
-    print "Thanks for having used this script, if you want to contribute you can fork it here https://github.com/matttmezza/email-sender"
+    print "\n---"
+    print "Thanks for having used this script, if you want to contribute you can fork it here https://github.com/mattmezza/email-sender"
 if __name__ == "__main__":
    main(sys.argv[1:])
