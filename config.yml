@@ -1,0 +1,8 @@
+smtp_cfg:
+  host: hub01
+  port: 25
+  username: "yourusername"
+  password: "YourP4ssword"
+  domain: "dadomain.com"
+  enable_starttls_auto: "false"
+  authentication: "plain"

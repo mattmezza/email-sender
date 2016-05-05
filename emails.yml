@@ -1,0 +1,21 @@
+vars:
+  name: "Matteo"
+  surname: "Merola"
+emails:
+  - vars:
+      name: "Zoe"
+      email: "zoe@gmail.com"
+    email:
+      recipient: "__name__ __surname__ <__email__>"
+      sender: "Name Surname <sender@domain.com>"
+      reply_to: "Matteo MEROLA <mattmezza@gmail.com>"
+      subject: "Please __name__, help me out with this"
+      body: "file://mail.html"
+  - vars:
+      email: "matt@gmail.com"
+    email:
+      recipient: "__name__ __surname__ <__email__>"
+      sender: "Name Surname <sender@domain.com>"
+      reply_to: "Matteo MEROLA <mattmezza@gmail.com>"
+      subject: "Please __name__, help me out with this"
+      body: "Hello __name__, how are you today? This is your email __email__"
