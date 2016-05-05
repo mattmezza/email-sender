@@ -14,6 +14,9 @@ class MyEmail:
         self.body = body
         self.reply_to = ""
 
+    def short_str(self):
+        return "       to: "+self.to+"\n  subject: "+self.subject
+
     def __str__(self):
         return "  from:  "+self.from_+"\n    to:  "+self.to+"\n  r_to:  "+self.reply_to+"\n  subj:  "+self.subject+"\n  body:\n"+self.body+"\n"
 
@@ -64,6 +67,16 @@ class MyMailer:
         for email in self.emails_to_send:
             self.send_email(email)
 
+    def send_interactive(self):
+        for email in self.emails_to_send:
+            print "Next email is:"
+            print email.short_str()
+            if query_yes_no("Do you really want to send the following email?"):
+                #self.send_email(email)
+                print "sending..."
+            else:
+                print "Email to "+email.to+" skipped..."
+
     def send_email(self, email):
         try:
             msg = MIMEText(email.body, "plain", 'utf-8')
@@ -83,18 +96,51 @@ class MyMailer:
             print "Unable to send email to " + email.to + " :-("
             print "the exception: ", str(e)
 
+def query_yes_no(question, default="yes"):
+    """Ask a yes/no question via raw_input() and return their answer.
+
+    "question" is a string that is presented to the user.
+    "default" is the presumed answer if the user just hits <Enter>.
+        It must be "yes" (the default), "no" or None (meaning
+        an answer is required of the user).
+
+    The "answer" return value is True for "yes" or False for "no".
+    """
+    valid = {"yes": True, "y": True, "ye": True,
+             "no": False, "n": False}
+    if default is None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError("invalid default answer: '%s'" % default)
+
+    while True:
+        sys.stdout.write(question + prompt)
+        choice = raw_input().lower()
+        if default is not None and choice == '':
+            return valid[default]
+        elif choice in valid:
+            return valid[choice]
+        else:
+            sys.stdout.write("Please respond with 'yes' or 'no' "
+                             "(or 'y' or 'n').\n")
+
 def main(argv):
     config_file = "config.yml"
     emails_file = ""
     print_ = False
+    interactive = False
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"c:e:ph",["config=","emails=","print", "help"])
+        opts, args = getopt.getopt(sys.argv[1:],"c:e:iph",["config=","emails=","interactive","print", "help"])
     except getopt.GetoptError:
-        print 'email-sender.py -c <config_file> -e <emails_file> [-p]'
+        print 'email-sender.py -c <config_file> -e <emails_file> [-i] [-p]'
         sys.exit(2)
     for opt, arg in opts:
         if opt in ('-h', '--help'):
-            print 'email-sender.py -c <config_file> -e <emails_file> [-p]'
+            print 'email-sender.py -c <config_file> -e <emails_file> [-i] [-p]'
             sys.exit()
         elif opt in ("-c", "--config"):
             config_file = arg
@@ -102,10 +148,15 @@ def main(argv):
             emails_file = arg
         elif opt in ("-p", "--print"):
             print_ = True
+        elif opt in ("-i", "--interactive"):
+            interactive = True
 
     mailer = MyMailer(config_file, emails_file)
     if print_:
         mailer.print_emails()
+        sys.exit()
+    elif interactive:
+        mailer.send_interactive()
     else:
         mailer.send_emails()
     print "\n_________________________________________"
