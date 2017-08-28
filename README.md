@@ -10,5 +10,12 @@ In order to be able to use such script you need to have `pyyaml` installed on yo
 For further information just contact me at [mattmezza@gmail.com](mailto:mattmezza@gmail.com)
 
 
+Use it like this
+
+```
+python email-sender.py -c config.yml -e emails.yml
+```
+
+you can see the help by running this command `python eamil-sender.py -h`
 
 ###### Matteo Merola `'mattmezza'`
