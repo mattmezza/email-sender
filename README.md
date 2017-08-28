@@ -16,6 +16,12 @@ Use it like this
 python email-sender.py -c config.yml -e emails.yml
 ```
 
+If you wanna use it interactively just add `-i` at the end
+
+```
+python email-sender.py -c config.yml -e emails.yml -i
+```
+
 you can see the help by running this command `python eamil-sender.py -h`
 
 ###### Matteo Merola `'mattmezza'`
