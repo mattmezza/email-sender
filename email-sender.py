@@ -114,7 +114,7 @@ class MyMailer:
     def send_email(self, email):
         try:
             self.log("Sending email...")
-            msg = MIMEText(email.body, "plain", 'utf-8')
+            msg = MIMEText(email.body, "html", 'utf-8')
             msg['subject'] = email.subject
             msg['from'] = email.from_
             msg['to'] = email.to
